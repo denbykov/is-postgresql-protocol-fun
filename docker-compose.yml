@@ -1,0 +1,22 @@
+name: postgresql-protocol-playground
+services:
+  postgresql:
+    image: postgres:17.0
+    ports:
+      - 5432:5432
+    expose:
+      - 5432
+    restart: on-failure
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
+      PGDATA: /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d database"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./postgresql/data:/var/lib/postgresql/data
+    container_name: postgresql
