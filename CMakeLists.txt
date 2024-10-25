@@ -2,19 +2,31 @@ cmake_minimum_required(VERSION 3.5.0)
 
 set(CMAKE_CXX_STANDARD 20)
 
-project(test VERSION 0.1.0 LANGUAGES C CXX)
+project(postgresqlClient VERSION 0.1.0 LANGUAGES C CXX)
 
 find_package(Boost 1.85 REQUIRED)
 
-set(SOURCES
-    source/main.cpp
-    # source/chat_client.cpp
-    # source/chat_server.cpp
-    # source/chat_message.hpp
+set(HEADERS
+    include/ippf/core/concepts.h
+    include/ippf/core/to_x_endian.h
+
+    include/ippf/io/ostream.h
+    include/ippf/io/istream.h
+    include/ippf/io/session_context.h
+
+    include/ippf/protocol/messages/frontend/StartUpMessage.h
+    include/ippf/protocol/actions/connect.h
+
+    include/ippf/session.h
+    include/ippf/connection_data.h
 )
 
-add_executable(test ${SOURCES})
+set(SOURCES
+    source/main.cpp
+)
 
-target_link_libraries(test PRIVATE Boost::boost)
+add_executable(postgresqlClient ${SOURCES} ${HEADERS})
 
-# target_include_directories(test ${CMAKE_CURRENT_BINARY_DIR})
+target_link_libraries(postgresqlClient PRIVATE Boost::boost)
+
+target_include_directories(postgresqlClient PRIVATE include)

@@ -7,7 +7,9 @@
             "request": "launch",
             // Resolved by CMake Tools:
             "program": "${command:cmake.launchTargetPath}",
-            "args": ["15552"],
+            "args": [
+                "15552"
+            ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [
@@ -22,7 +24,7 @@
                     "value": "Something something"
                 }
             ],
-            "externalConsole": true
+            "console": "integratedTerminal"
         }
     ]
 }
