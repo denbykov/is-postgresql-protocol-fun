@@ -1,10 +1,15 @@
 #include <SDKDDKVer.h>
 #include <ippf/session.h>
+#include <tests/messages/all.h>
 
 #include <boost/asio.hpp>
 #include <iostream>
 
 int main() {
+    // tests
+    ippf::tests::messages::test_all();
+
+    // custom test
     boost::asio::io_context io_context;
     auto work_guard = boost::asio::make_work_guard(io_context);
 

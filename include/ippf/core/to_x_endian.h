@@ -31,7 +31,7 @@ namespace ippf::core {
     }
 
     template <typename T>
-    T convert_to_little_endian(T in) {
+    T to_little_endian(T in) {
         static_assert(std::is_integral_v<T>, "T must be an integral type");
 
         if constexpr (sizeof(T) == 1) {
