@@ -2,6 +2,7 @@
 
 #include <ippf/connection_data.h>
 #include <ippf/io/session_context.h>
+#include <ippf/protocol/message_reader.h>
 #include <ippf/protocol/messages/frontend/StartUpMessage.h>
 
 #include <boost/asio.hpp>
@@ -18,7 +19,11 @@ namespace ippf::protocol::actions::connect {
 
         std::future<void> execute(const connection_data& connection_data) {
             tcp::resolver resolver(ctx_.io_context);
+
             auto self = shared_from_this();
+            message_reader_ =
+                std::make_shared<message_reader<action>>(self, ctx_);
+
             cd_ = connection_data;
             auto future = promise_.get_future();
 
@@ -51,8 +56,7 @@ namespace ippf::protocol::actions::connect {
             }
 
             boost::asio::async_write(
-                ctx_.socket,
-                boost::asio::buffer(msg.data()->data, msg.data()->size),
+                ctx_.socket, boost::asio::buffer(msg.data()),
                 [self](auto ec, auto) mutable { self->onStartUpSent(ec); });
         }
 
@@ -67,26 +71,11 @@ namespace ippf::protocol::actions::connect {
                 return;
             }
 
-            boost::asio::async_read(
-                ctx_.socket, boost::asio::buffer(sbuf_.data, 5),
-                [self](auto ec, auto) {
-                    const auto* buf = &self->sbuf_;
-
-                    int32_t offset{};
-
-                    std::cout << core::easy_get<char>(buf, offset) << std::endl;
-                    std::cout << core::easy_get<int32_t>(buf, offset)
-                              << std::endl;
-                    // std::cout << core::easy_get<int32_t>(buf, offset)
-                    //           << std::endl;
-                    // std::cout << core::easy_get<std::string_view>(buf,
-                    // offset)
-                    //           << std::endl;
-                    self->onServerResponse(ec);
-                });
+            message_reader_->read_message(
+                [self](auto ec) mutable { self->on_server_message(ec); });
         }
 
-        void onServerResponse(boost::system::error_code ec) {
+        void on_server_message(boost::system::error_code ec) {
             auto self = shared_from_this();
 
             if (ec) {
@@ -105,7 +94,7 @@ namespace ippf::protocol::actions::connect {
         std::promise<void> promise_;
         connection_data cd_;
 
-        core::static_buffer sbuf_;
+        std::shared_ptr<message_reader<action>> message_reader_{nullptr};
     };
 
 }  // namespace ippf::protocol::actions::connect

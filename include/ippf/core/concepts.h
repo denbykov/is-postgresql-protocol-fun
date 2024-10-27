@@ -16,7 +16,6 @@ namespace ippf::core {
     concept Copyable = Integer<T> || String<T>;
 
     template <class T>
-    concept Buffer = std::is_convertible_v<T, static_buffer> ||
-                     std::is_convertible_v<T, buffer>;
+    concept Buffer = std::is_convertible_v<T, buffer>;
 
 }  // namespace ippf::core

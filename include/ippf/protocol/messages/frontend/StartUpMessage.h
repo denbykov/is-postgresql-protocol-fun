@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <string_view>
+#include <vector>
 
 namespace ippf::protocol::messages::frontend {
     class StartUpMessage {
@@ -30,18 +31,17 @@ namespace ippf::protocol::messages::frontend {
 
             size += 1;  // terminator;
 
-            buf_.data = static_cast<char*>(calloc(sizeof(char), size));
-            buf_.size = size;
+            buf_ = core::buffer(size, 0);
 
             int32_t offset{0};
 
-            core::copy(core::to_big_endian(size), &buf_, offset);
-            core::copy(core::to_big_endian(static_cast<int32_t>(ver)), &buf_,
+            core::copy(core::to_big_endian(size), buf_, offset);
+            core::copy(core::to_big_endian(static_cast<int32_t>(ver)), buf_,
                        offset);
 
             for (const auto& param : parameters) {
-                core::copy(param.first, &buf_, offset);
-                core::copy(param.second, &buf_, offset);
+                core::copy(param.first, buf_, offset);
+                core::copy(param.second, buf_, offset);
             }
         }
 
@@ -49,9 +49,7 @@ namespace ippf::protocol::messages::frontend {
         StartUpMessage operator==(const StartUpMessage& other) = delete;
         StartUpMessage operator==(StartUpMessage&& other) = delete;
 
-        ~StartUpMessage() { delete buf_.data; }
-
-        const core::buffer* data() const { return &buf_; }
+        const core::buffer& data() const { return buf_; }
 
     private:
         core::buffer buf_;

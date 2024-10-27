@@ -16,10 +16,9 @@ namespace ippf::tests::messages::StartUpMessage {
 
         message msg{ver, parameters};
 
-        const auto* buf = msg.data();
+        const auto& buf = msg.data();
 
-        assert(buf->size == 38 && "Data size is not equal to expected");
-        assert(buf->data != nullptr && "Buffer is not allocated");
+        assert(buf.size() == 38 && "Data size is not equal to expected");
 
         int32_t offset{};
         assert(core::easy_get<uint32_t>(buf, offset) == 38);

@@ -12,16 +12,29 @@ namespace ippf {
         using tcp = boost::asio::ip::tcp;
 
     public:
-        session(boost::asio::io_context& io_context) : _ctx(io_context) {}
+        session(boost::asio::io_context& io_context) : ctx_(io_context) {}
 
         std::future<void> connect(const connection_data& cd) {
+            initSASL();
+
             auto action =
-                std::make_shared<protocol::actions::connect::action>(_ctx);
+                std::make_shared<protocol::actions::connect::action>(ctx_);
             return action->execute(cd);
         }
 
     private:
-        connection_data _connection_data;
-        io::session_context _ctx;
+        void initSASL() {
+            int res =
+                sasl_client_new("postgresql", connection_data_.host.data(),
+                                nullptr, nullptr, nullptr, 0, &ctx_.sasl_conn);
+
+            if (res != SASL_OK) {
+                throw std::runtime_error("Failed to create sasl client");
+            }
+        }
+
+    private:
+        connection_data connection_data_;
+        io::session_context ctx_;
     };
 }  // namespace ippf

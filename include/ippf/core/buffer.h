@@ -1,15 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 
 namespace ippf::core {
-    struct buffer {
-        int32_t size{};
-        char* data{nullptr};
-    };
+    constexpr int32_t default_buffer_size = 512;
 
-    struct static_buffer {
-        static constexpr int32_t size = 512;
-        char data[size];
-    };
+    using buffer = std::vector<char>;
 }  // namespace ippf::core
