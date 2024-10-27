@@ -68,7 +68,7 @@ namespace ippf::protocol::actions::connect {
             }
 
             boost::asio::async_read(
-                ctx_.socket, boost::asio::buffer(sbuf_.data, 24),
+                ctx_.socket, boost::asio::buffer(sbuf_.data, 5),
                 [self](auto ec, auto) {
                     const auto* buf = &self->sbuf_;
 
@@ -77,10 +77,11 @@ namespace ippf::protocol::actions::connect {
                     std::cout << core::easy_get<char>(buf, offset) << std::endl;
                     std::cout << core::easy_get<int32_t>(buf, offset)
                               << std::endl;
-                    std::cout << core::easy_get<int32_t>(buf, offset)
-                              << std::endl;
-                    std::cout << core::easy_get<std::string_view>(buf, offset)
-                              << std::endl;
+                    // std::cout << core::easy_get<int32_t>(buf, offset)
+                    //           << std::endl;
+                    // std::cout << core::easy_get<std::string_view>(buf,
+                    // offset)
+                    //           << std::endl;
                     self->onServerResponse(ec);
                 });
         }

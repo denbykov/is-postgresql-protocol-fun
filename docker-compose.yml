@@ -13,10 +13,10 @@ services:
       POSTGRES_DB: postgres
       PGDATA: /var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d database"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
     volumes:
       - ./postgresql/data:/var/lib/postgresql/data
-    container_name: postgresql
+    command: ["postgres"]
