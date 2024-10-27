@@ -21,6 +21,7 @@ set(HEADERS
     include/ippf/protocol/messages/backend/AuthenticationSASL.h
     include/ippf/protocol/actions/connect.h
     include/ippf/protocol/message_reader.h
+    include/ippf/protocol/message_parser.h
 
     include/ippf/session.h
     include/ippf/connection_data.h

@@ -9,6 +9,7 @@
 #include <iostream>
 
 namespace ippf::protocol::actions::connect {
+    using namespace ippf::protocol::messages;
     using namespace ippf::protocol::messages::frontend;
 
     class action : public std::enable_shared_from_this<action> {
@@ -74,11 +75,13 @@ namespace ippf::protocol::actions::connect {
                 return;
             }
 
-            message_reader_->read_message(
-                [self](auto ec) mutable { self->on_server_message(ec); });
+            message_reader_->read_message([self](auto ec, auto tnm) mutable {
+                self->on_server_message(ec, tnm);
+            });
         }
 
-        void on_server_message(boost::system::error_code ec) {
+        void on_server_message(boost::system::error_code ec,
+                               std::optional<backend::type_n_message> tnm) {
             auto self = shared_from_this();
 
             if (ec) {
@@ -87,6 +90,15 @@ namespace ippf::protocol::actions::connect {
                     std::make_exception_ptr(std::runtime_error(ec.message())));
 
                 return;
+            }
+
+            if (tnm->first ==
+                backend::internal_message_type::AuthenticationSASL) {
+                auto msg =
+                    std::any_cast<std::shared_ptr<backend::AuthenticationSASL>>(
+                        tnm->second);
+
+                std::cout << msg->get_mechanism() << std::endl;
             }
 
             promise_.set_value();

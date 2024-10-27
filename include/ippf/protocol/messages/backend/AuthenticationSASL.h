@@ -13,8 +13,15 @@ namespace ippf::protocol::messages::backend {
         AuthenticationSASL(core::buffer&& buf) : buf_(std::move(buf)) {}
 
         AuthenticationSASL(const AuthenticationSASL& other) = delete;
+        AuthenticationSASL(AuthenticationSASL&&) = default;
+
         AuthenticationSASL operator==(const AuthenticationSASL& other) = delete;
-        AuthenticationSASL operator==(AuthenticationSASL&& other) = delete;
+        AuthenticationSASL& operator=(AuthenticationSASL&&) = default;
+
+        std::string_view get_mechanism() {
+            int32_t offset = 9;
+            return core::easy_get<std::string_view>(buf_, offset);
+        }
 
         const core::buffer* data() const { return &buf_; }
 
