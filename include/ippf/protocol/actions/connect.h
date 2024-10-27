@@ -55,9 +55,12 @@ namespace ippf::protocol::actions::connect {
                 return;
             }
 
-            boost::asio::async_write(
-                ctx_.socket, boost::asio::buffer(msg.data()),
-                [self](auto ec, auto) mutable { self->onStartUpSent(ec); });
+            auto data = msg.data();
+
+            boost::asio::async_write(ctx_.socket, boost::asio::buffer(*data),
+                                     [self, data](auto ec, auto) mutable {
+                                         self->onStartUpSent(ec);
+                                     });
         }
 
         void onStartUpSent(boost::system::error_code ec) {

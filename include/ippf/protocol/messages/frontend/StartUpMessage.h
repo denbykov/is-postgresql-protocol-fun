@@ -31,17 +31,17 @@ namespace ippf::protocol::messages::frontend {
 
             size += 1;  // terminator;
 
-            buf_ = core::buffer(size, 0);
+            buf_ = std::make_shared<core::buffer>(size, 0);
 
             int32_t offset{0};
 
-            core::copy(core::to_big_endian(size), buf_, offset);
-            core::copy(core::to_big_endian(static_cast<int32_t>(ver)), buf_,
-                       offset);
+            core::copy(core::to_big_endian(size), *buf_.get(), offset);
+            core::copy(core::to_big_endian(static_cast<int32_t>(ver)),
+                       *buf_.get(), offset);
 
             for (const auto& param : parameters) {
-                core::copy(param.first, buf_, offset);
-                core::copy(param.second, buf_, offset);
+                core::copy(param.first, *buf_.get(), offset);
+                core::copy(param.second, *buf_.get(), offset);
             }
         }
 
@@ -49,9 +49,9 @@ namespace ippf::protocol::messages::frontend {
         StartUpMessage operator==(const StartUpMessage& other) = delete;
         StartUpMessage operator==(StartUpMessage&& other) = delete;
 
-        const core::buffer& data() const { return buf_; }
+        std::shared_ptr<core::buffer> data() const { return buf_; }
 
     private:
-        core::buffer buf_;
+        std::shared_ptr<core::buffer> buf_;
     };
 }  // namespace ippf::protocol::messages::frontend

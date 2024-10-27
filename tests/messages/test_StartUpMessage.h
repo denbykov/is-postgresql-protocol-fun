@@ -16,7 +16,8 @@ namespace ippf::tests::messages::StartUpMessage {
 
         message msg{ver, parameters};
 
-        const auto& buf = msg.data();
+        auto buf_ptr = msg.data();
+        const auto& buf = *buf_ptr.get();
 
         assert(buf.size() == 38 && "Data size is not equal to expected");
 
