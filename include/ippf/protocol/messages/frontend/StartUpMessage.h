@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ippf/core/buffer.h>
+#include <ippf/core/buffer_op.h>
 #include <ippf/core/to_x_endian.h>
 
 #include <cstdint>
