@@ -5,6 +5,7 @@
 #include <ippf/core/to_x_endian.h>
 
 #include <cstdint>
+#include <memory>
 #include <string_view>
 #include <vector>
 

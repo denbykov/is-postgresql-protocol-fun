@@ -27,6 +27,9 @@ namespace ippf::protocol {
                     assert(false && "Unaccounted message category received");
                     break;
             }
+
+            throw std::runtime_error(
+                "Pasring is failed - should never happen error");
         }
 
     private:
@@ -50,6 +53,9 @@ namespace ippf::protocol {
                     assert(false && "Unaccounted auth message received");
                     break;
             }
+
+            throw std::runtime_error(
+                "Pasring is failed - should never happen error");
         }
 
     private:

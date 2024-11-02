@@ -55,6 +55,14 @@ namespace ippf::protocol {
                 });
         }
 
+        void reset() {
+            on_done_ = nullptr;
+            sbuf_offset_ = 0;
+            size_ = 0;
+            bytes_read_ = 0;
+            buf_ = {};
+        }
+
     private:
         void read_more() {
             auto self = this->shared_from_this();
@@ -79,7 +87,8 @@ namespace ippf::protocol {
                     if (self->bytes_read_ == self->size_ - 1) {
                         buf.reserve(self->size_);
 
-                        std::copy(sbuf.begin(), sbuf.end(),
+                        std::copy(sbuf.begin(),
+                                  sbuf.begin() + self->sbuf_offset_ + 1,
                                   std::back_inserter(buf));
 
                         auto tnm = message_parser(std::move(buf)).parse();
@@ -93,7 +102,7 @@ namespace ippf::protocol {
     private:
         std::shared_ptr<Action> master_;
         io::session_context& ctx_;
-        on_done_t on_done_;
+        on_done_t on_done_{nullptr};
 
         core::static_buffer sbuf_{};
         int32_t sbuf_offset_{};

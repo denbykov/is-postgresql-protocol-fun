@@ -1,8 +1,10 @@
 #pragma once
 
 #include <ippf/connection_data.h>
+#include <ippf/core/crypto.h>
 #include <ippf/io/session_context.h>
 #include <ippf/protocol/message_reader.h>
+#include <ippf/protocol/messages/frontend/SASLInitialResponse.h>
 #include <ippf/protocol/messages/frontend/StartUpMessage.h>
 
 #include <boost/asio.hpp>
@@ -76,6 +78,7 @@ namespace ippf::protocol::actions::connect {
             }
 
             message_reader_->read_message([self](auto ec, auto tnm) mutable {
+                self->message_reader_->reset();
                 self->on_server_message(ec, tnm);
             });
         }
@@ -94,12 +97,43 @@ namespace ippf::protocol::actions::connect {
 
             if (tnm->first ==
                 backend::internal_message_type::AuthenticationSASL) {
-                auto msg =
-                    std::any_cast<std::shared_ptr<backend::AuthenticationSASL>>(
-                        tnm->second);
+                std::cout << "Authentication is sasl!" << std::endl;
+                promise_.set_value();
+                // auto rsp =
+                //     std::any_cast<std::shared_ptr<backend::AuthenticationSASL>>(
+                //         tnm->second);
 
-                std::cout << msg->get_mechanism() << std::endl;
+                // std::string client_nonce = core::generate_nonce();
+                // std::string client_first_message =
+                //     "n,,n=" + cd_.username + ",r=" + client_nonce;
+
+                // messages::frontend::SASLInitialResponse msg{
+                //     rsp->get_mechanism(), client_first_message};
+
+                // auto data = msg.data();
+
+                // boost::asio::async_write(
+                //     ctx_.socket, boost::asio::buffer(*data),
+                //     [self, data](auto ec, auto sent) mutable {
+                //         self->onSASLInitialResponseSent(ec);
+                //     });
             }
+        }
+
+        void onSASLInitialResponseSent(boost::system::error_code ec) {
+            auto self = shared_from_this();
+
+            if (ec) {
+                ctx_.socket.close();
+                promise_.set_exception(
+                    std::make_exception_ptr(std::runtime_error(ec.message())));
+
+                return;
+            }
+
+            message_reader_->read_message([self](auto ec, auto tnm) mutable {
+                self->on_server_message(ec, tnm);
+            });
 
             promise_.set_value();
         }
