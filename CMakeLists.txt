@@ -15,6 +15,7 @@ set(HEADERS
     include/ippf/core/buffer.h
     include/ippf/core/buffer_op.h
     include/ippf/core/crypto.h
+    include/ippf/core/types_op.h
 
     include/ippf/io/session_context.h
 

@@ -13,6 +13,7 @@
 namespace ippf::protocol::actions::connect {
     using namespace ippf::protocol::messages;
     using namespace ippf::protocol::messages::frontend;
+    using namespace std::string_literals;
 
     class action : public std::enable_shared_from_this<action> {
         using tcp = boost::asio::ip::tcp;
@@ -97,26 +98,24 @@ namespace ippf::protocol::actions::connect {
 
             if (tnm->first ==
                 backend::internal_message_type::AuthenticationSASL) {
-                std::cout << "Authentication is sasl!" << std::endl;
-                promise_.set_value();
-                // auto rsp =
-                //     std::any_cast<std::shared_ptr<backend::AuthenticationSASL>>(
-                //         tnm->second);
+                auto rsp =
+                    std::any_cast<std::shared_ptr<backend::AuthenticationSASL>>(
+                        tnm->second);
 
-                // std::string client_nonce = core::generate_nonce();
-                // std::string client_first_message =
-                //     "n,,n=" + cd_.username + ",r=" + client_nonce;
+                std::string client_nonce = core::generate_nonce();
+                std::string client_first_message =
+                    "n,,n="s + "*"s + ",r="s + client_nonce;
 
-                // messages::frontend::SASLInitialResponse msg{
-                //     rsp->get_mechanism(), client_first_message};
+                messages::frontend::SASLInitialResponse msg{
+                    rsp->get_mechanism(), client_first_message};
 
-                // auto data = msg.data();
+                auto data = msg.data();
 
-                // boost::asio::async_write(
-                //     ctx_.socket, boost::asio::buffer(*data),
-                //     [self, data](auto ec, auto sent) mutable {
-                //         self->onSASLInitialResponseSent(ec);
-                //     });
+                boost::asio::async_write(
+                    ctx_.socket, boost::asio::buffer(*data),
+                    [self, data](auto ec, auto sent) mutable {
+                        self->onSASLInitialResponseSent(ec);
+                    });
             }
         }
 
@@ -132,10 +131,11 @@ namespace ippf::protocol::actions::connect {
             }
 
             message_reader_->read_message([self](auto ec, auto tnm) mutable {
+                self->message_reader_->reset();
                 self->on_server_message(ec, tnm);
             });
 
-            promise_.set_value();
+            // promise_.set_value();
         }
 
     private:

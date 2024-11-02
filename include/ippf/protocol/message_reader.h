@@ -48,7 +48,9 @@ namespace ippf::protocol {
 
                     const auto& buf = self->sbuf_;
 
-                    int32_t offset{1};
+                    int32_t offset{0};
+                    [[maybe_unused]] auto identifier =
+                        core::easy_get<char>(buf, offset);
                     self->size_ = core::easy_get<int32_t>(buf, offset) + 1;
 
                     self->read_more();
@@ -67,7 +69,7 @@ namespace ippf::protocol {
         void read_more() {
             auto self = this->shared_from_this();
 
-            int32_t bytes_left = size_ - bytes_read_ - 1;
+            int32_t bytes_left = size_ - bytes_read_;
             int32_t capacity_left =
                 static_cast<int32_t>(sbuf_.size()) - sbuf_offset_;
 
@@ -84,7 +86,7 @@ namespace ippf::protocol {
                     const auto& sbuf = self->sbuf_;
                     auto& buf = self->buf_;
 
-                    if (self->bytes_read_ == self->size_ - 1) {
+                    if (self->bytes_read_ == self->size_) {
                         buf.reserve(self->size_);
 
                         std::copy(sbuf.begin(),

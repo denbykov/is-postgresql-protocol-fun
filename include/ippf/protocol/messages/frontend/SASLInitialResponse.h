@@ -6,24 +6,26 @@
 
 #include <cstdint>
 #include <memory>
-#include <string_view>
 #include <vector>
 
 namespace ippf::protocol::messages::frontend {
     class SASLInitialResponse {
     public:
         SASLInitialResponse(const std::string_view mechanism,
-                            const std::string_view initial_response) {
-            int32_t size{};
-            int32_t ir_size{static_cast<int32_t>(initial_response.size() + 1)};
+                            const core::bytes initial_response) {
+            int32_t packet_size{};
 
-            size += sizeof(identifier);
-            size += sizeof(size);
-            size += static_cast<int32_t>(mechanism.size() + 1);
-            size += sizeof(ir_size);
+            int32_t size{};
+            int32_t ir_size{core::get_size(initial_response)};
+
+            packet_size += core::get_size(identifier);
+            size += core::get_size(size);
+            size += core::get_size(mechanism);
+            size += core::get_size(ir_size);
             size += ir_size;
 
-            buf_ = std::make_shared<core::buffer>(size, 0);
+            packet_size += size;
+            buf_ = std::make_shared<core::buffer>(packet_size, 0);
 
             int32_t offset{0};
 

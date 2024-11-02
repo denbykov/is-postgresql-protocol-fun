@@ -22,12 +22,15 @@ namespace ippf::protocol::messages::frontend {
     public:
         StartUpMessage(version ver, const parameters& parameters) {
             int32_t size{};
-            size += sizeof(size);
-            size += sizeof(ver);
+
+            auto version = static_cast<int32_t>(ver);
+
+            size += core::get_size(size);
+            size += core::get_size(version);
 
             for (const auto& param : parameters) {
-                size += static_cast<int32_t>(param.first.size()) + 1;
-                size += static_cast<int32_t>(param.second.size()) + 1;
+                size += core::get_size(param.first);
+                size += core::get_size(param.second);
             }
 
             size += 1;  // terminator;
@@ -37,8 +40,7 @@ namespace ippf::protocol::messages::frontend {
             int32_t offset{0};
 
             core::copy(core::to_big_endian(size), *buf_.get(), offset);
-            core::copy(core::to_big_endian(static_cast<int32_t>(ver)),
-                       *buf_.get(), offset);
+            core::copy(core::to_big_endian(version), *buf_.get(), offset);
 
             for (const auto& param : parameters) {
                 core::copy(param.first, *buf_.get(), offset);

@@ -2,6 +2,7 @@
 
 #include <ippf/core/concepts.h>
 #include <ippf/core/to_x_endian.h>
+#include <ippf/core/types_op.h>
 
 #include <cstdint>
 #include <utility>
@@ -13,8 +14,8 @@ namespace ippf::core {
     template <Integer T, Buffer B>
     struct copy_t<T, B> {
         static void apply(T&& val, B& buf, int32_t& offset) {
-            std::memcpy(buf.data() + offset, &val, sizeof(val));
-            offset += sizeof(val);
+            std::memcpy(buf.data() + offset, &val, get_size(val));
+            offset += get_size(val);
         }
     };
 
@@ -22,7 +23,15 @@ namespace ippf::core {
     struct copy_t<T, B> {
         static void apply(T&& val, B& buf, int32_t& offset) {
             std::memcpy(buf.data() + offset, val.data(), val.size());
-            offset += static_cast<int32_t>(val.size() + 1);
+            offset += get_size(val);
+        }
+    };
+
+    template <Bytes T, Buffer B>
+    struct copy_t<T, B> {
+        static void apply(T&& val, B& buf, int32_t& offset) {
+            std::memcpy(buf.data() + offset, val.data(), val.size());
+            offset += get_size(val);
         }
     };
 
@@ -39,8 +48,8 @@ namespace ippf::core {
         static T apply(const B& buf, int32_t& offset) {
             T val{};
 
-            std::memcpy(&val, buf.data() + offset, sizeof(val));
-            offset += sizeof(val);
+            std::memcpy(&val, buf.data() + offset, get_size(val));
+            offset += get_size(val);
 
             return val;
         }
@@ -67,6 +76,23 @@ namespace ippf::core {
     template <Copyable T, Buffer B>
     T get(const B& buf, int32_t& offset) {
         return get_t<T, B>::apply(buf, offset);
+    }
+
+    template <Bytes T, Buffer B>
+    struct get_t<T, B> {
+        static T apply(const B& buf, int32_t size, int32_t& offset) {
+            const char* start = buf.data() + offset;
+
+            auto val = core::bytes(start, size);
+            offset += size;
+
+            return val;
+        }
+    };
+
+    template <Bytes T, Buffer B>
+    T get(const B& buf, int32_t size, int32_t& offset) {
+        return get_t<T, B>::apply(buf, size, offset);
     }
 
     template <Copyable T, Buffer B>
