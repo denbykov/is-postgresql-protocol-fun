@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ippf/protocol/messages/backend/AuthenticationSASL.h>
+#include <ippf/protocol/messages/backend/AuthenticationSASLContinue.h>
 #include <ippf/protocol/messages/backend/message_types.h>
 
 #include <any>
@@ -47,6 +48,14 @@ namespace ippf::protocol {
 
                     return std::make_pair(
                         internal_message_type::AuthenticationSASL, val);
+                }
+
+                case auth::message_type::AuthenticationSASLContinue: {
+                    std::any val = std::make_shared<AuthenticationSASLContinue>(
+                        std::move(buf_));
+
+                    return std::make_pair(
+                        internal_message_type::AuthenticationSASLContinue, val);
                 }
 
                 default:

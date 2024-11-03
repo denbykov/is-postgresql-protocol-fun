@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstdint>
 #include <any>
+#include <cstdint>
 
 namespace ippf::protocol::messages::backend {
     enum class message_category : char {
@@ -12,12 +12,14 @@ namespace ippf::protocol::messages::backend {
         enum class message_type : int32_t {
             AuthenticationOk = 0,
             AuthenticationSASL = 10,
+            AuthenticationSASLContinue = 11,
         };
     }
 
     enum class internal_message_type : int32_t {
         AuthenticationOk,
         AuthenticationSASL,
+        AuthenticationSASLContinue,
     };
 
     using type_n_message = std::pair<internal_message_type, std::any>;
