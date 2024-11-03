@@ -36,19 +36,5 @@ int main() {
     io_context.stop();
     io_thread.join();
 
-    // std::string salt_base64 = "AY90OXgAgGBmpFHHDK2Uhg==";
-    // auto salt = core::from_base64(salt_base64);
-    // int iterations = 4096;
-
-    // std::cout << "Salt: " << core::to_hex_string(salt) << std::endl;
-
-    // std::string password = "admin";
-
-    // auto salted_password =
-    //     core::derive_salted_password(password, salt, iterations);
-
-    // std::cout << "Salted password: " << core::to_hex_string(salted_password)
-    //           << std::endl;
-
     return 0;
 }
