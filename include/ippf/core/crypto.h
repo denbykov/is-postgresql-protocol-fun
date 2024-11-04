@@ -65,9 +65,10 @@ namespace ippf::core {
         int iterations) {
         std::vector<uint8_t> salted_password(SHA256_DIGEST_LENGTH);
 
-        PKCS5_PBKDF2_HMAC(password.c_str(), password.size(), salt.data(),
-                          salt.size(), iterations, EVP_sha256(),
-                          salted_password.size(), salted_password.data());
+        PKCS5_PBKDF2_HMAC(
+            password.c_str(), static_cast<int>(password.size()), salt.data(),
+            static_cast<int>(salt.size()), iterations, EVP_sha256(),
+            static_cast<int>(salted_password.size()), salted_password.data());
 
         return salted_password;
     }
@@ -77,7 +78,7 @@ namespace ippf::core {
         unsigned int len = SHA256_DIGEST_LENGTH;
         uint8_t result[SHA256_DIGEST_LENGTH];
 
-        HMAC(EVP_sha256(), key.data(), key.size(),
+        HMAC(EVP_sha256(), key.data(), static_cast<int>(key.size()),
              reinterpret_cast<const uint8_t*>(data.c_str()), data.size(),
              result, &len);
 
@@ -85,13 +86,42 @@ namespace ippf::core {
     }
 
     std::vector<uint8_t> sha256(const std::vector<uint8_t>& data) {
-        uint8_t hash[SHA256_DIGEST_LENGTH];
-        SHA256_CTX sha256;
-        SHA256_Init(&sha256);
-        SHA256_Update(&sha256, data.data(), data.size());
-        SHA256_Final(hash, &sha256);
+        std::vector<uint8_t> hash(EVP_MD_size(EVP_sha256()));
+        unsigned int hash_len = 0;
 
-        return std::vector<uint8_t>(hash, hash + SHA256_DIGEST_LENGTH);
+        // Create and initialize a digest context
+        EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+        if (!ctx) {
+            throw std::runtime_error("Failed to create context");
+        }
+
+        try {
+            // Initialize the SHA-256 digest operation
+            if (EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr) != 1) {
+                throw std::runtime_error("Digest initialization failed");
+            }
+
+            // Provide the data to be hashed
+            if (EVP_DigestUpdate(ctx, data.data(), data.size()) != 1) {
+                throw std::runtime_error("Digest update failed");
+            }
+
+            // Finalize the digest and obtain the hash
+            if (EVP_DigestFinal_ex(ctx, hash.data(), &hash_len) != 1) {
+                throw std::runtime_error("Digest finalization failed");
+            }
+
+            // Resize the vector to the actual length of the hash
+            hash.resize(hash_len);
+        } catch (...) {
+            EVP_MD_CTX_free(ctx);
+            throw;
+        }
+
+        // Clean up
+        EVP_MD_CTX_free(ctx);
+
+        return hash;
     }
 
     std::vector<uint8_t> xor_arrays(const std::vector<uint8_t>& a,
