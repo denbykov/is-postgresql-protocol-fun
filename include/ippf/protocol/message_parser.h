@@ -1,7 +1,14 @@
 #pragma once
 
+#include <ippf/protocol/messages/backend/AuthenticationOk.h>
 #include <ippf/protocol/messages/backend/AuthenticationSASL.h>
 #include <ippf/protocol/messages/backend/AuthenticationSASLContinue.h>
+#include <ippf/protocol/messages/backend/AuthenticationSASLFinal.h>
+#include <ippf/protocol/messages/backend/BackendKeyData.h>
+#include <ippf/protocol/messages/backend/ErrorResponse.h>
+#include <ippf/protocol/messages/backend/NoticeResponse.h>
+#include <ippf/protocol/messages/backend/ParameterStatus.h>
+#include <ippf/protocol/messages/backend/ReadyForQuery.h>
 #include <ippf/protocol/messages/backend/message_types.h>
 
 #include <any>
@@ -24,6 +31,46 @@ namespace ippf::protocol {
                 case message_category::auth:
                     return parse_auth_message();
 
+                case message_category::error: {
+                    std::any val =
+                        std::make_shared<ErrorResponse>(std::move(buf_));
+
+                    return std::make_pair(internal_message_type::ErrorResponse,
+                                          val);
+                }
+
+                case message_category::notice: {
+                    std::any val =
+                        std::make_shared<NoticeResponse>(std::move(buf_));
+
+                    return std::make_pair(internal_message_type::NoticeResponse,
+                                          val);
+                }
+
+                case message_category::key_data: {
+                    std::any val =
+                        std::make_shared<BackendKeyData>(std::move(buf_));
+
+                    return std::make_pair(internal_message_type::BackendKeyData,
+                                          val);
+                }
+
+                case message_category::parameter_status: {
+                    std::any val =
+                        std::make_shared<ParameterStatus>(std::move(buf_));
+
+                    return std::make_pair(
+                        internal_message_type::ParameterStatus, val);
+                }
+
+                case message_category::ready_for_query: {
+                    std::any val =
+                        std::make_shared<ReadyForQuery>(std::move(buf_));
+
+                    return std::make_pair(internal_message_type::ReadyForQuery,
+                                          val);
+                }
+
                 default:
                     assert(false && "Unaccounted message category received");
                     break;
@@ -39,9 +86,6 @@ namespace ippf::protocol {
                 core::easy_get<int32_t>(buf_, offset_));
 
             switch (type) {
-                case auth::message_type::AuthenticationOk:
-                    assert(false && "Wow you did it!");
-
                 case auth::message_type::AuthenticationSASL: {
                     std::any val =
                         std::make_shared<AuthenticationSASL>(std::move(buf_));
@@ -56,6 +100,22 @@ namespace ippf::protocol {
 
                     return std::make_pair(
                         internal_message_type::AuthenticationSASLContinue, val);
+                }
+
+                case auth::message_type::AuthenticationSASLFinal: {
+                    std::any val = std::make_shared<AuthenticationSASLFinal>(
+                        std::move(buf_));
+
+                    return std::make_pair(
+                        internal_message_type::AuthenticationSASLFinal, val);
+                }
+
+                case auth::message_type::AuthenticationOk: {
+                    std::any val =
+                        std::make_shared<AuthenticationOk>(std::move(buf_));
+
+                    return std::make_pair(
+                        internal_message_type::AuthenticationOk, val);
                 }
 
                 default:

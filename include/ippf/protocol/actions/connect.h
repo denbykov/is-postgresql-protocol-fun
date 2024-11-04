@@ -50,6 +50,7 @@ namespace ippf::protocol::actions::connect {
             std::string server_nonce;
             std::vector<uint8_t> salt;
             int32_t iterations;
+            std::string auth_message;
         };
 
     private:
@@ -202,14 +203,15 @@ namespace ippf::protocol::actions::connect {
                 cd_.password, auth_ctx_.salt, auth_ctx_.iterations);
 
             // Build the auth_message
-            std::string auth_message = auth_ctx_.client_first_message_bare +
-                                       "," + std::string(server_first_message) +
-                                       "," + client_final_message_without_proof;
+            auth_ctx_.auth_message = auth_ctx_.client_first_message_bare + "," +
+                                     std::string(server_first_message) + "," +
+                                     client_final_message_without_proof;
 
             // Compute the client proof
             auto client_key = core::hmac_sha256(salted_password, "Client Key");
             auto stored_key = core::sha256(client_key);
-            auto client_signature = core::hmac_sha256(stored_key, auth_message);
+            auto client_signature =
+                core::hmac_sha256(stored_key, auth_ctx_.auth_message);
             auto client_proof = core::xor_arrays(client_key, client_signature);
             std::string client_proof_base64 =
                 core::to_base64(client_proof.data(), client_proof.size());
@@ -270,12 +272,147 @@ namespace ippf::protocol::actions::connect {
                 return;
             }
 
-            self->promise_.set_value();
+            message_reader_->read_message([self](auto ec, auto tnm) mutable {
+                self->message_reader_->reset();
+                self->onSASLResponse_response(ec, tnm);
+            });
+        }
 
-            // message_reader_->read_message([self](auto ec, auto tnm) mutable {
-            //     self->message_reader_->reset();
-            //     self->onSASLInitialResponse_response(ec, tnm);
-            // });
+        void onSASLResponse_response(
+            boost::system::error_code ec,
+            std::optional<backend::type_n_message> tnm) {
+            auto self = shared_from_this();
+
+            if (ec) {
+                ctx_.socket.close();
+                promise_.set_exception(
+                    std::make_exception_ptr(std::runtime_error(ec.message())));
+
+                return;
+            }
+
+            if (tnm->first == backend::internal_message_type::ErrorResponse) {
+                return handle_ErrorResponse(tnm->second);
+            } else if (tnm->first == backend::internal_message_type::
+                                         AuthenticationSASLFinal) {
+                auto message = std::any_cast<
+                    std::shared_ptr<backend::AuthenticationSASLFinal>>(
+                    tnm->second);
+
+                auto sasl_data = message->get_sasl_data();
+                auto sasl_data_str =
+                    std::string_view(sasl_data.data(), sasl_data.size());
+
+                constexpr std::string_view verifier_prefix("v=");
+
+                auto verifier_base64 = std::string(sasl_data_str.substr(
+                    0 + verifier_prefix.size(),
+                    sasl_data_str.size() - verifier_prefix.size()));
+                auto verifier = core::from_base64(verifier_base64);
+
+                auto salted_password = core::derive_salted_password(
+                    cd_.password, auth_ctx_.salt, auth_ctx_.iterations);
+
+                auto server_key =
+                    core::hmac_sha256(salted_password, "Server Key");
+
+                auto server_signature =
+                    core::hmac_sha256(server_key, auth_ctx_.auth_message);
+
+                if (server_signature != verifier) {
+                    std::stringstream ss;
+                    ss << "SASL error: Server verifier is not valid";
+
+                    promise_.set_exception(
+                        std::make_exception_ptr(std::runtime_error(ss.str())));
+                }
+
+                message_reader_->read_message(
+                    [self](auto ec, auto tnm) mutable {
+                        self->message_reader_->reset();
+                        self->check_AuthenticationOk(ec, tnm);
+                    });
+            } else {
+                assert(false && "Unexpected message type");
+            }
+        }
+
+        void check_AuthenticationOk(
+            boost::system::error_code ec,
+            std::optional<backend::type_n_message> tnm) {
+            auto self = shared_from_this();
+
+            if (ec) {
+                ctx_.socket.close();
+                promise_.set_exception(
+                    std::make_exception_ptr(std::runtime_error(ec.message())));
+
+                return;
+            }
+
+            if (tnm->first ==
+                backend::internal_message_type::AuthenticationOk) {
+                message_reader_->read_message(
+                    [self](auto ec, auto tnm) mutable {
+                        self->message_reader_->reset();
+                        self->on_post_ok_messages(ec, tnm);
+                    });
+            } else {
+                assert(false && "Unexpected message type");
+            }
+        }
+
+        void on_post_ok_messages(boost::system::error_code ec,
+                                 std::optional<backend::type_n_message> tnm) {
+            auto self = shared_from_this();
+
+            if (ec) {
+                ctx_.socket.close();
+                promise_.set_exception(
+                    std::make_exception_ptr(std::runtime_error(ec.message())));
+
+                return;
+            }
+
+            if (tnm->first == backend::internal_message_type::BackendKeyData) {
+                // Skip handling for now
+            } else if (tnm->first ==
+                       backend::internal_message_type::ParameterStatus) {
+                // Skip handling for now
+            } else if (tnm->first ==
+                       backend::internal_message_type::ReadyForQuery) {
+                promise_.set_value();
+                return;
+            } else if (tnm->first ==
+                       backend::internal_message_type::ErrorResponse) {
+                return handle_ErrorResponse(tnm->second);
+            } else if (tnm->first ==
+                       backend::internal_message_type::NoticeResponse) {
+                // Well, ok. Skip handling for now
+            } else {
+                assert(false && "Unexpected message type");
+            }
+
+            message_reader_->read_message([self](auto ec, auto tnm) mutable {
+                self->message_reader_->reset();
+                self->on_post_ok_messages(ec, tnm);
+            });
+        }
+
+        void handle_ErrorResponse(std::any response) {
+            auto message =
+                std::any_cast<std::shared_ptr<backend::ErrorResponse>>(
+                    response);
+
+            auto fields = message->get_fields();
+
+            std::stringstream ss;
+
+            ss << fields.at(message_id_token::serverity) << ": "
+               << fields.at(message_id_token::message);
+
+            promise_.set_exception(
+                std::make_exception_ptr(std::runtime_error(ss.str())));
         }
 
     private:
