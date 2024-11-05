@@ -5,10 +5,13 @@
 #include <ippf/protocol/messages/backend/AuthenticationSASLContinue.h>
 #include <ippf/protocol/messages/backend/AuthenticationSASLFinal.h>
 #include <ippf/protocol/messages/backend/BackendKeyData.h>
+#include <ippf/protocol/messages/backend/CommandComplete.h>
+#include <ippf/protocol/messages/backend/DataRow.h>
 #include <ippf/protocol/messages/backend/ErrorResponse.h>
 #include <ippf/protocol/messages/backend/NoticeResponse.h>
 #include <ippf/protocol/messages/backend/ParameterStatus.h>
 #include <ippf/protocol/messages/backend/ReadyForQuery.h>
+#include <ippf/protocol/messages/backend/RowDescription.h>
 #include <ippf/protocol/messages/backend/message_types.h>
 
 #include <any>
@@ -69,6 +72,28 @@ namespace ippf::protocol {
 
                     return std::make_pair(internal_message_type::ReadyForQuery,
                                           val);
+                }
+
+                case message_category::row_description: {
+                    std::any val =
+                        std::make_shared<RowDescription>(std::move(buf_));
+
+                    return std::make_pair(internal_message_type::RowDescription,
+                                          val);
+                }
+
+                case message_category::data_row: {
+                    std::any val = std::make_shared<DataRow>(std::move(buf_));
+
+                    return std::make_pair(internal_message_type::DataRow, val);
+                }
+
+                case message_category::command_complete: {
+                    std::any val =
+                        std::make_shared<CommandComplete>(std::move(buf_));
+
+                    return std::make_pair(
+                        internal_message_type::CommandComplete, val);
                 }
 
                 default:

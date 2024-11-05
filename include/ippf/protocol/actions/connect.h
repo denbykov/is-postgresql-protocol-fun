@@ -248,7 +248,7 @@ namespace ippf::protocol::actions::connect {
                 auto client_final_message =
                     build_client_final_message(sasl_data_str);
 
-                messages::frontend::SASLResponse msg{client_final_message};
+                SASLResponse msg{client_final_message};
                 auto data = msg.data();
 
                 boost::asio::async_write(
