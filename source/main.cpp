@@ -26,8 +26,16 @@ int main() {
         cd.username = "admin";
         cd.password = "admin";
         cd.database = "postgres";
-        auto future = session.connect(cd);
-        future.get();
+
+        auto conn_future = session.connect(cd);
+        conn_future.get();
+
+        std::string query =
+            "SELECT schema_name FROM information_schema.schemata WHERE "
+            "schema_name = 'public';";
+
+        auto query_future = session.execute(query);
+        query_future.get();
 
     } catch (const std::exception& ex) {
         std::cout << ex.what() << std::endl;

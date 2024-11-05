@@ -11,6 +11,9 @@ namespace ippf::protocol::messages::backend {
         key_data = 'K',
         parameter_status = 'S',
         ready_for_query = 'Z',
+        command_complete = 'C',
+        row_description = 'T',
+        data_row = 'D',
     };
 
     // Applicable for Error and Notice messages
@@ -52,6 +55,10 @@ namespace ippf::protocol::messages::backend {
 
         ErrorResponse,
         NoticeResponse,
+
+        CommandComplete,
+        RowDescription,
+        DataRow,
 
         BackendKeyData,
         ParameterStatus,

@@ -22,11 +22,15 @@ set(HEADERS
     include/ippf/protocol/messages/frontend/StartUpMessage.h
     include/ippf/protocol/messages/frontend/SASLInitialResponse.h
     include/ippf/protocol/messages/frontend/SASLResponse.h
+    include/ippf/protocol/messages/frontend/Query.h
 
     include/ippf/protocol/messages/backend/AuthenticationSASL.h
     include/ippf/protocol/messages/backend/AuthenticationSASLContinue.h
     include/ippf/protocol/messages/backend/AuthenticationSASLFinal.h
     include/ippf/protocol/messages/backend/AuthenticationOk.h
+    include/ippf/protocol/messages/backend/CommandComplete.h
+    include/ippf/protocol/messages/backend/RowDescription.h
+    include/ippf/protocol/messages/backend/DataRow.h
 
     include/ippf/protocol/messages/backend/ErrorResponse.h
     include/ippf/protocol/messages/backend/NoticeResponse.h
@@ -36,7 +40,10 @@ set(HEADERS
     include/ippf/protocol/messages/backend/ReadyForQuery.h
     
     include/ippf/protocol/messages/backend/message_types.h
+    
     include/ippf/protocol/actions/connect.h
+    include/ippf/protocol/actions/do_simple_query.h
+
     include/ippf/protocol/message_reader.h
     include/ippf/protocol/message_parser.h
 
